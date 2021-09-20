@@ -14,7 +14,11 @@ yourls_add_filter('shunt_update_clicks', 'power_ga_mp_trackCurrent');
 
 function power_ga_mp_trackCurrent($unused) {
     global $keyword;
-    power_ga_mp($keyword, yourls_get_keyword_title($keyword), $_SERVER['HTTP_REFERER']);
+    if (isset($_SERVER['HTTP_REFERER'])) {
+        power_ga_mp($keyword, yourls_get_keyword_title($keyword), $_SERVER['HTTP_REFERER']);
+    } else {
+        power_ga_mp($keyword, yourls_get_keyword_title($keyword));
+    }
     return $unused;
 }
 
