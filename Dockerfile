@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:22.04
 
 ENV APP_ROOT /yourls
 ENV DEBIAN_FRONTEND noninteractive
@@ -15,7 +15,7 @@ RUN mkdir -p ${APP_ROOT} \
   && phpenmod mysql \
   && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
   && a2enconf fqdn \
-  && a2enmod php7.2 rewrite
+  && a2enmod php8.1 rewrite
 
 COPY docker/start-yourls.sh /usr/bin/start-yourls.sh
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
