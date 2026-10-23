@@ -54,8 +54,12 @@ define( 'YOURLS_UNIQUE_URLS', getenv('YOURLS_UNIQUE_URLS') !== 'false' );
  ** Read http://yourls.org/privatepublic for more details if you're unsure */
 define( 'YOURLS_PRIVATE', getenv('YOURLS_PRIVATE')  !== 'false');
 
-/** A random secret hash used to encrypt cookies. You don't have to remember it, make it long and complicated. Hint: copy from http://yourls.org/cookie **/
-define( 'YOURLS_COOKIEKEY', getenv('YOURLS_COOKIEKEY') ?: 'something random' );
+/** A random secret hash used to encrypt cookies. You don't have to remember it, make it long and complicated. Hint: copy from http://yourls.org/cookie
+ ** Required: without it anyone could forge admin cookies, so YOURLS refuses to start **/
+if ( !getenv('YOURLS_COOKIEKEY') ) {
+  throw new RuntimeException('YOURLS_COOKIEKEY must be set');
+}
+define( 'YOURLS_COOKIEKEY', getenv('YOURLS_COOKIEKEY') );
 
 /** Username(s) and password(s) allowed to access the site. Passwords either in plain text or as encrypted hashes
  ** YOURLS will auto encrypt plain text passwords in this file
