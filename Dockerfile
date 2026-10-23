@@ -1,28 +1,26 @@
-FROM php:8.4.27-apache
+FROM php:8.5.12-fpm-alpine
 
 ENV APP_ROOT /yourls
-ENV DEBIAN_FRONTEND noninteractive
+
+# YOURLS publishes no checksums, so this is the SHA-256 of GitHub's archive for the tag. Update both together.
+ARG YOURLS_VERSION=1.10.6
+ARG YOURLS_SHA256=95549b8463c67a88eaa93f5dd8079599bc895f5ca047001ce385d1afdda26563
 
 RUN mkdir -p ${APP_ROOT} \
-  && apt-get update \
-  && apt-get install -y curl supervisor \
-  && unset DEBIAN_FRONTEND \
-  && rm -rf /var/lib/apt/lists/* \
+  && apk add --no-cache curl nginx supervisor \
+  && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
   && docker-php-ext-install pdo_mysql \
-  && curl -L https://github.com/YOURLS/YOURLS/archive/1.10.6.tar.gz | tar -zx -C ${APP_ROOT} --strip-components=1 \
-  # undo https://github.com/YOURLS/YOURLS/commit/d97af0f1dc3ae5886db8a7561c1845432d001926
-  # that clears active plugins whenever web container restarts
-  && sed -i 's/^\(.*yourls_update_option.*active_plugins.*\)$/\/\/\1/' ${APP_ROOT}/includes/functions-install.php \
-  && echo "ServerName localhost" | tee /etc/apache2/conf-available/fqdn.conf \
-  && a2enconf fqdn \
-  && a2enmod rewrite
+  && curl -fsSL -o /tmp/yourls.tar.gz https://github.com/YOURLS/YOURLS/archive/${YOURLS_VERSION}.tar.gz \
+  && echo "${YOURLS_SHA256}  /tmp/yourls.tar.gz" | sha256sum -c - \
+  && tar -zxf /tmp/yourls.tar.gz -C ${APP_ROOT} --strip-components=1 \
+  && rm /tmp/yourls.tar.gz
 
 COPY docker/start-yourls.sh /usr/bin/start-yourls.sh
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/vhost.conf /etc/apache2/sites-enabled/000-default.conf
+COPY docker/nginx.conf /etc/nginx/http.d/default.conf
+COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-yourls.conf
 COPY docker/config.php ${APP_ROOT}/user/config.php
 COPY docker/migrate.php ${APP_ROOT}/migrate.php
-COPY docker/.htaccess ${APP_ROOT}/.htaccess
 COPY docker/index.php ${APP_ROOT}/index.php
 COPY plugins ${APP_ROOT}/user/plugins
 
