@@ -6,12 +6,21 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=coolpassword
       - MYSQL_DATABASE=yourls
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysql -h 127.0.0.1 -u root -e 'SELECT 1' \"$$MYSQL_DATABASE\""]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 60s
+      start_interval: 1s
+
   web:
     build: .
     ports:
       - "80:80"
-    links:
-      - db
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       - YOURLS_DB_USER=root
       - YOURLS_DB_PASS=coolpassword
